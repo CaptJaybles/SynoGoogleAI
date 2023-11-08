@@ -29,9 +29,9 @@ Setup
   
   4) the outgoing URL in synology integration will be http://IP_ADDRESS:FLASK_PORT/SynochatPalm2 change IP_ADDRESS to what it is on your local PC your running the model on
   
-  5) Use either synochatPalm2.bat file or command
+  5) Use either Palm2.bat file or command
   
-    python synochatPalm2.py
+    python Palm2.py
 
 Features
   
