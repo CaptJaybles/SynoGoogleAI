@@ -1,4 +1,4 @@
-# SynochatPalm2
+# SynochatPalm2 v1.1
 Using google Palm2 api with synology chat
 
 Install
@@ -35,16 +35,14 @@ Setup
 
 Features
   
-  1) Talk to any google api model by changing the model in settings
-  
-  2) It has a model reset if the conversation strays command    
+  1) context and conversation reset command 
       
     /reset
   
-  3) set a temporary context without having to change it in settings, will reset back to none on a /reset or script exit
+  2) set a temporary context without having to change it in settings, will reset back to none on a /reset or script exit
       
     /context
     
-  4) added prompt override to use palm generate instead of palm chat
+  3) input prompt override to use palm generate instead of palm chat, safety filters have been disabled with this command
 
     /override
