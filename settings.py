@@ -1,23 +1,17 @@
-PALM_API_KEY = 'google_palm_api_key'
-
-SYNOCHAT_TOKEN = 'Put_your_token_here'
-
-INCOMING_WEBHOOK_URL = "Copy_from_synologychat_incoming_URL"
+PALM_API_KEY = 'Google Palm API Key'
+MODEL = 'models/chat-bison-001'
+TEMPURATURE = 0.9
+TOP_P = 0.8
+TOP_K = 100
+MAX_TOKENS=1000 #max token output for /override output
 
 FLASK_PORT = 5015
-
-TEMPURATURE = 0.9
-
-TOP_P = 0.8
-
-TOP_K = 100
-
-MODEL = 'models/chat-bison-001'
+SYNOCHAT_TOKEN = "Synology Token"
+INCOMING_WEBHOOK_URL = "Bot Incoming Webhook Url"
 
 CONTEXT = None
 
 EXAMPLES = None
-
 #EXAMPLES = [
 #  [
 #    "Hey. I am going to describe a scene or place I'm imagining. And I want you to help describe what it might feel like to be in that scene.",
