@@ -28,6 +28,8 @@ Setup
   3) copy the Token and the incoming URL to the settings file
   
   4) the outgoing URL in synology integration will be http://IP_ADDRESS:FLASK_PORT/SynoGoogleAI change IP_ADDRESS to what it is on your local PC your running the model on
+
+  4a) if installing to synology nas itself see belore the outgoing URL will be something like this http://127.0.0.1:5015/SynoGoogleAI depending on your port you use
   
   5) Use either SynoGoogleAI.bat file or command
   
