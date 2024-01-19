@@ -70,19 +70,22 @@ Palm Features
 Install this on your synology nas and run from nas
   1) install python from package center, python3.10 recomended
   2) create directory and place files onto NAS
-  3) ssh into NAS
-  4) go to directory folder ie cd /volume1/FOLDER
-  5) python3.10 -m venv venv
-  6) . venv/bin/activate
-  7) pip install -r requirements.txt
-  8) Open control Panel app on NAS
-  9) navigate to task schedualer
-  10) select create, triggered task, user-defined script
-  11) Give it a task name like SynoGoogleAI
-  12) Select task settings and paste something like this
+  3) Make sure you make the proper changes to the settings file
+  4) ssh into NAS
+  5) go to directory folder ie cd /volume1/FOLDER
+  6) python3.10 -m venv venv
+  7) . venv/bin/activate
+  8) pip install -r requirements.txt
+  9) Open control Panel app on NAS
+  10) navigate to task schedualer
+  11) select create, triggered task, user-defined script
+  12) Give it a task name like SynoGoogleAI
+  13) Select task settings and paste something like this
       
       cd /volume1/chat/SynoGoogleAI
       
       . venv/bin/activate
       
       python3.10 SynoGoogleAI.py
+
+  14) select ok and it should be running
