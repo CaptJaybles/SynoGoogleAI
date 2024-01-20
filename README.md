@@ -77,7 +77,7 @@ Install this on your synology nas and run from nas
   5) go to directory folder ie cd /volume1/FOLDER
   6) python3.10 -m venv venv
   7) . venv/bin/activate
-  8) pip install -r requirements.txt
+  8) pip3.10 install -r requirements.txt
   9) Open control Panel app on NAS
   10) navigate to task schedualer
   11) select create, triggered task, user-defined script
