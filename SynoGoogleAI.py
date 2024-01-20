@@ -186,7 +186,7 @@ def generate_model_response(input_text, user_id):
             elif input_text.startswith("/override"):
                 def generate_override_message(input_text, user_id):
                     input_prompt = input_text.replace("/override", "").strip()
-                    palm_output = genai.generate_text(**defaults, prompt=input_prompt, max_output_tokens=MAX_TOKENS, safety_settings=safety_settings_palm, stop_sequences=STOP_SEQUENCES)
+                    palm_output = genai.generate_text(prompt=input_prompt, model='models/text-bison-001', temperature=TEMPURATURE, candidate_count=1, top_k=TOP_K, top_p=TOP_P, max_output_tokens=MAX_TOKENS, safety_settings=safety_settings_palm, stop_sequences=STOP_SEQUENCES)
                     answer = palm_output.result
                     send_back_response(answer, user_id)
                 threading.Thread(target=generate_override_message, args=(input_text, user_id)).start()
