@@ -1,4 +1,4 @@
-# SynoGoogleAI V1.0
+# SynoGoogleAI V1.1
 Using GoogleAI Gemini and Palm api with synology chat
 
 Install
