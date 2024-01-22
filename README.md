@@ -37,6 +37,7 @@ Setup
 
 
 Features
+
 Message Queue support and Multi-User support added
 
 Select between using Gemini or Palm models in settings (default is gemini)
