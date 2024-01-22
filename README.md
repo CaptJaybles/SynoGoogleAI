@@ -1,4 +1,4 @@
-# SynoGoogleAI V1.1
+# SynoGoogleAI V1.2
 Using GoogleAI Gemini and Palm api with synology chat
 
 Install
@@ -37,7 +37,7 @@ Setup
 
 
 Features
-
+Message Queue support and Multi-User support added
 
 Select between using Gemini or Palm models in settings (default is gemini)
   
