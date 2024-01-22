@@ -1,6 +1,7 @@
 GOOGLEAI_API_KEY = 'GoogleAI API Key'
 GEMINI_MODEL = 'models/gemini-pro'
-PALM_MODEL = 'models/chat-bison-001'
+PALM_CHAT_MODEL = 'models/chat-bison-001'
+PALM_TEXT_MODEL = 'models/text-bison-001'
 
 MODEL = "GEMINI" #choose "PALM" or "GEMINI"
 
@@ -14,7 +15,7 @@ FLASK_PORT = 5015
 SYNOCHAT_TOKEN = 'Put_your_token_here'
 INCOMING_WEBHOOK_URL = "Copy_from_synologychat_incoming_URL"
 
-#used with palm model only
+#used with palm chat model only
 CONTEXT = None
 EXAMPLES = None
 #EXAMPLES = [

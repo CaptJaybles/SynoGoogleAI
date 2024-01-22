@@ -7,7 +7,6 @@ import threading
 from synology import OutgoingWebhook
 from settings import *
 import google.generativeai as genai
-import google.generativeai as palm
 import queue
 
 app = Flask(__name__)
@@ -15,13 +14,9 @@ task_queue = queue.Queue()
 processing_semaphore = threading.Semaphore(value=1)
 
 genai.configure(api_key=GOOGLEAI_API_KEY)
-genai.ChatSession(model=GEMINI_MODEL, history=None)
 gemini_model = genai.GenerativeModel(model_name=GEMINI_MODEL)
-gemini_chat = gemini_model.start_chat()
-
-current_topic = False
-set_context = CONTEXT
-palm_response = None
+gemini_user_data = {}
+palm_user_data = {}
 
 def send_back_response(output_text, user_id):
     response = output_text
@@ -50,7 +45,15 @@ def send_back_response(output_text, user_id):
             pass
     return processing_semaphore.release()
 
-def generate_model_response(input_text, user_id):
+def generate_model_response(input_text, user_id, user_context):
+    global gemini_user_data, palm_user_data
+
+    gemini_chat = gemini_user_data[user_id]['gemini_chat']
+    set_context = palm_user_data[user_id]['set_context']
+    current_topic = palm_user_data[user_id]['current_topic']
+    palm_response = palm_user_data[user_id]['palm_response']
+
+    MODEL = user_context.get('model', '')
 
     if MODEL == "GEMINI":
         safety_settings_gemini = [
@@ -81,38 +84,66 @@ def generate_model_response(input_text, user_id):
         }
 
         def generate_response(input_text, user_id):
-            global gemini_chat, gemini_model, gemini_chat_session
+            global gemini_user_data, palm_user_data
+            gemini_chat = user_context.get('gemini_chat', '')
+
             if input_text.startswith("/reset"):
-                genai.ChatSession(model=GEMINI_MODEL, history=None)
-                gemini_model = genai.GenerativeModel(model_name=GEMINI_MODEL)
-                gemini_chat = gemini_model.start_chat()
+                gemini_user_data[user_id] = {
+                    'gemini_chat': gemini_model.start_chat(history=[]),
+                    'model': MODEL
+                }
                 output = "conversation Reset"
                 send_back_response(output, user_id)
 
             elif input_text.startswith("/rewind"):
-                gemini_chat.rewind()
+                gemini_rewind = gemini_chat.rewind()
+                gemini_user_data[user_id] = {
+                    'gemini_chat': gemini_chat,
+                    'model': MODEL
+                }
                 output = "Conversation Rewound"
                 send_back_response(output, user_id)
 
             elif input_text.startswith("/model"):
-                global MODEL
                 input = input_text.replace("/model", "").strip()
                 if input.lower() == "palm":
-                    MODEL = "PALM"
+                    gemini_user_data[user_id] = {'gemini_chat': gemini_chat, 'model': 'PALM'}
+                    palm_user_data[user_id] = {
+                        'current_topic': current_topic,
+                        'set_context': set_context,
+                        'palm_response': palm_response,
+                        'model': 'PALM'
+                    }
                     output = f"Model is now set to Palm"
                 elif input.lower() == "gemini":
-                    MODEL = "GEMINI"
+                    gemini_user_data[user_id] = {'gemini_chat': gemini_chat, 'model': 'GEMINI'}
+                    palm_user_data[user_id] = {
+                        'current_topic': current_topic,
+                        'set_context': set_context,
+                        'palm_response': palm_response,
+                        'model': 'GEMINI'
+                    }
                     output = f"Model is now set to Gemini"
                 else:
-                    MODEL = None
+                    gemini_user_data[user_id] = {'gemini_chat': gemini_chat, 'model': None}
+                    palm_user_data[user_id] = {
+                        'current_topic': current_topic,
+                        'set_context': set_context,
+                        'palm_response': palm_response,
+                        'model': None
+                    }
                     output = f"The model name was misspelled please try again /model gemini|palm"
                 send_back_response(output, user_id)
 
             else:
                 def generate_message(input_text, user_id):
-                    global gemini_chat
+                    global gemini_user_data
                     gemini_response = gemini_chat.send_message(content=input_text, generation_config=generation_config, safety_settings=safety_settings_gemini)
                     output = gemini_response.text
+                    gemini_user_data[user_id] = {
+                        'gemini_chat': gemini_chat,
+                        'model': MODEL
+                    }
                     send_back_response(output, user_id)
                 threading.Thread(target=generate_message, args=(input_text, user_id)).start()
 
@@ -147,46 +178,78 @@ def generate_model_response(input_text, user_id):
             "threshold": "BLOCK_NONE"
          },
         ]
-        defaults = {
-            'model': PALM_MODEL,
-            'temperature': TEMPURATURE,
-            'candidate_count': 1,
-            'top_k': TOP_K,
-            'top_p': TOP_P,
-        }
 
         def generate_response(input_text, user_id):
-            global set_context, current_topic, palm_response
+            global gemini_user_data, palm_user_data
+            current_topic = user_context.get('current_topic', '')
+            current_context = user_context.get('set_context', '')
+            palm_response = user_context.get('palm_response', '')
+
             if input_text.startswith("/reset"):
-                current_topic = False
-                set_context = CONTEXT
-                palm_response = None
+                palm_user_data[user_id] = {
+                    'current_topic': False,
+                    'set_context': CONTEXT,
+                    'palm_response': None,
+                    'model': MODEL
+                }
                 output = "conversation Reset"
                 send_back_response(output, user_id)
 
             elif input_text.startswith("/model"):
-                global MODEL
                 input = input_text.replace("/model", "").strip()
                 if input.lower() == "palm":
-                    MODEL = "PALM"
+                    gemini_user_data[user_id] = {
+                        'gemini_chat': gemini_chat,
+                        'model': 'PALM'
+                    }
+                    palm_user_data[user_id] = {
+                        'current_topic': current_topic,
+                        'set_context': current_context,
+                        'palm_response': palm_response,
+                        'model': 'PALM'
+                    }
                     output = f"Model is now set to Palm"
                 elif input.lower() == "gemini":
-                    MODEL = "GEMINI"
+                    gemini_user_data[user_id] = {
+                        'gemini_chat': gemini_chat,
+                        'model': 'GEMINI'
+                    }
+                    palm_user_data[user_id] = {
+                        'current_topic': current_topic,
+                        'set_context': current_context,
+                        'palm_response': palm_response,
+                        'model': 'GEMINI'
+                    }
                     output = f"Model is now set to Gemini"
                 else:
-                    MODEL = None
+                    gemini_user_data[user_id] = {
+                        'gemini_chat': gemini_chat,
+                        'model': None
+                    }
+                    palm_user_data[user_id] = {
+                        'current_topic': current_topic,
+                        'set_context': current_context,
+                        'palm_response': palm_response,
+                        'model': None
+                    }
                     output = f"The model name was misspelled please try again /model gemini|palm"
                 send_back_response(output, user_id)
 
             elif input_text.startswith("/context"):
-                set_context = input_text.replace("/context", "").strip().capitalize()
+                new_context = input_text.replace("/context", "").strip().capitalize()
+                palm_user_data[user_id] = {
+                    'current_topic': current_topic,
+                    'set_context': new_context,
+                    'palm_response': palm_response,
+                    'model': MODEL
+                }
                 output = f"Temp Context Set"
                 send_back_response(output, user_id)
 
             elif input_text.startswith("/override"):
                 def generate_override_message(input_text, user_id):
                     input_prompt = input_text.replace("/override", "").strip()
-                    palm_output = genai.generate_text(prompt=input_prompt, model='models/text-bison-001', temperature=TEMPURATURE, candidate_count=1, top_k=TOP_K, top_p=TOP_P, max_output_tokens=MAX_TOKENS, safety_settings=safety_settings_palm, stop_sequences=STOP_SEQUENCES)
+                    palm_output = genai.generate_text(prompt=input_prompt, model=PALM_TEXT_MODEL, temperature=TEMPURATURE, candidate_count=1, top_k=TOP_K, top_p=TOP_P, max_output_tokens=MAX_TOKENS, safety_settings=safety_settings_palm, stop_sequences=STOP_SEQUENCES)
                     answer = palm_output.result
                     send_back_response(answer, user_id)
                 threading.Thread(target=generate_override_message, args=(input_text, user_id)).start()
@@ -194,47 +257,93 @@ def generate_model_response(input_text, user_id):
             # Normal chat prompt
             else:
                 def generate_message(input_text, user_id):
-                    global current_topic, palm_response
+                    global palm_user_data
+                    palm_response = user_context.get('palm_response', '')
                     if current_topic == True:
-                        palm_response = palm_response.reply(input_text)
-                        output = palm_response.last
+                        response = palm_response.reply(input_text)
+                        output = response.last
+                        palm_user_data[user_id] = {
+                            'current_topic': current_topic,
+                            'set_context': current_context,
+                            'palm_response': response,
+                            'model': MODEL
+                        }
                         if output == None:
                             safety_output = f"Google safety filter kicked in try /override 'message' to get the answer"
                             send_back_response(safety_output, user_id)
                         else:
-                            current_topic = True
+                            palm_user_data[user_id] = {
+                                'current_topic': True,
+                                'set_context': current_context,
+                                'palm_response': response,
+                                'model': MODEL
+                            }
                             send_back_response(output, user_id)
                     else:
+                        defaults = {'model': PALM_CHAT_MODEL, 'temperature': TEMPURATURE, 'candidate_count': 1, 'top_k': TOP_K, 'top_p': TOP_P, 'context': current_context, 'examples': EXAMPLES}
                         init_message = []
                         init_message.append(input_text)
                         init_message = init_message[-1:]
-                        palm_response = genai.chat(**defaults, context=f'{set_context}', examples=EXAMPLES, messages=init_message)
+                        palm_response = genai.chat(**defaults, messages=init_message)
                         output = palm_response.last
+                        palm_user_data[user_id] = {
+                            'current_topic': current_topic,
+                            'set_context': current_context,
+                            'palm_response': palm_response,
+                            'model': MODEL
+                        }
                         if output == None:
                             safety_output = f"Google safety filter kicked in try /override 'message' to get the answer"
                             send_back_response(safety_output, user_id)
                         else:
-                            current_topic = True
+                            palm_user_data[user_id] = {
+                                'current_topic': True,
+                                'set_context': current_context,
+                                'palm_response': palm_response,
+                                'model': MODEL
+                            }
                             send_back_response(output, user_id)
                 threading.Thread(target=generate_message, args=(input_text, user_id)).start()
     else:
         def generate_response(input_text, user_id):
-            global MODEL
-            if input_text.startswith("/model"):
-                input = input_text.replace("/model", "").strip()
-                if input.lower() == "palm":
-                    MODEL = "PALM"
-                    output = f"Model is now set to Palm"
-                elif input.lower() == "gemini":
-                    MODEL = "GEMINI"
-                    output = f"Model is now set to Gemini"
-                else:
-                    MODEL = None
-                    output = f"The model name was misspelled please try again /model gemini|palm"
-                send_back_response(output, user_id)
+            global gemini_user_data, palm_user_data
+            if input.lower() == "palm":
+                gemini_user_data[user_id] = {
+                    'gemini_chat': gemini_chat,
+                    'model': 'PALM'
+                }
+                palm_user_data[user_id] = {
+                    'current_topic': current_topic,
+                    'set_context': set_context,
+                    'palm_response': palm_response,
+                    'model': 'PALM'
+                }
+                output = f"Model is now set to Palm"
+            elif input.lower() == "gemini":
+                gemini_user_data[user_id] = {
+                    'gemini_chat': gemini_chat,
+                    'model': 'GEMINI'
+                }
+                palm_user_data[user_id] = {
+                    'current_topic': current_topic,
+                    'set_context': set_context,
+                    'palm_response': palm_response,
+                    'model': 'GEMINI'
+                }
+                output = f"Model is now set to Gemini"
             else:
-                output = f"Model type is not set please try again /model gemini|palm"
-                send_back_response(output, user_id)
+                gemini_user_data[user_id] = {
+                    'gemini_chat': gemini_chat,
+                    'model': None
+                }
+                palm_user_data[user_id] = {
+                    'current_topic': current_topic,
+                    'set_context': set_context,
+                    'palm_response': palm_response,
+                    'model': None
+                }
+                output = f"The model name was misspelled please try again /model gemini|palm"
+            send_back_response(output, user_id)
     threading.Thread(target=generate_response, args=(input_text, user_id)).start()
     return "..."
 
@@ -246,15 +355,30 @@ def chatbot():
         return webhook.createResponse('Outgoing Webhook authentication failed: Token mismatch.')
     input_text = webhook.text
     user_id = webhook.user_id
-    task_queue.put((input_text, user_id))
+    if user_id not in gemini_user_data:
+        gemini_user_data[user_id] = {
+            'gemini_chat': gemini_model.start_chat(history=[]),
+            'model': MODEL
+        }
+    if user_id not in palm_user_data:
+        palm_user_data[user_id] = {
+            'current_topic': False,
+            'set_context': CONTEXT,
+            'palm_response': None,
+            'model': MODEL
+        }
+    if gemini_user_data[user_id]['model'] and palm_user_data[user_id]['model'] == 'GEMINI':
+        task_queue.put((input_text, user_id, gemini_user_data[user_id]))
+    if gemini_user_data[user_id]['model'] and palm_user_data[user_id]['model'] == 'PALM':
+        task_queue.put((input_text, user_id, palm_user_data[user_id]))
     return "Task queued for processing"
 
 def process_tasks():
     while True:
         processing_semaphore.acquire()
         try:
-            input_text, user_id = task_queue.get()
-            generate_model_response(input_text, user_id)
+            input_text, user_id, user_context = task_queue.get()
+            generate_model_response(input_text, user_id, user_context)
         finally:
             task_queue.task_done()
 
