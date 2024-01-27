@@ -75,7 +75,10 @@ Install this on your synology nas and run from nas
   2) create directory and place files onto NAS
   3) Make sure you make the proper changes to the settings file
   4) ssh into NAS
-  5) go to directory folder ie cd /volume1/FOLDER
+  5) go to directory folder ie 
+
+    cd /volume1/FOLDER
+
   6) python3.10 -m venv venv
   7) . venv/bin/activate
   8) pip3.10 install -r requirements.txt
