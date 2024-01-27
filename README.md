@@ -48,11 +48,11 @@ Gemini Features
 
   1) Conversation reset command
 
-     /reset
+    /reset
      
   2) Rewind your conversation back one exchange
 
-     /rewind
+    /rewind
 
 Palm Features
 
@@ -88,10 +88,10 @@ Install this on your synology nas and run from nas
   12) Give it a task name like SynoGoogleAI
   13) Select task settings and paste something like this
       
-      cd /volume1/chat/SynoGoogleAI
+    cd /volume1/chat/SynoGoogleAI
       
-      . venv/bin/activate
+    . venv/bin/activate
       
-      python3.10 SynoGoogleAI.py
+    python3.10 SynoGoogleAI.py
 
   14) select ok and it should be running
