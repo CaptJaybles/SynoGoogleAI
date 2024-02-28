@@ -19,16 +19,12 @@ gemini_user_data = {}
 palm_user_data = {}
 
 def send_back_response(output_text, user_id):
-    response = output_text
     chunks = []
     current_chunk = ""
-    sentences = response.split("\n\n")
+    sentences = output_text.split("\n\n")
     for sentence in sentences:
-        if len(current_chunk) + len(sentence) + 2 <= 256:
-            current_chunk += sentence + "\n\n"
-        else:
-            chunks.append(current_chunk.strip())
-            current_chunk = sentence + "\n\n"
+        chunks.append(current_chunk.strip())
+        current_chunk = sentence + "\n\n"
     if current_chunk:
         chunks.append(current_chunk.strip())
     for chunk in chunks:
@@ -41,8 +37,6 @@ def send_back_response(output_text, user_id):
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             return "Error", 500
-        finally:
-            pass
     return processing_semaphore.release()
 
 def generate_model_response(input_text, user_id, user_context):
